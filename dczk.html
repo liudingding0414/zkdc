@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>中考英语单词背诵 | 全类别快速定位</title>
+<style>
+  body{margin:0;background:#080a1a;overflow:hidden;font-family:Microsoft YaHei;}
+  #wordBox{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:rgba(20,25,50,0.9);color:#fff;
+    padding:35px 40px;border-radius:20px;
+    max-width:90%;text-align:center;
+    backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);
+    z-index:10;
+  }
+  #unit{font-size:20px;color:#00ffcc;margin-bottom:8px;}
+  #english{font-size:36px;margin-bottom:5px;font-weight:bold;word-break:break-all;}
+  #phonetic{font-size:18px;color:#ff9900;margin-bottom:8px;}
+  #chinese{font-size:22px;color:#ffd700;margin-bottom:10px;}
+  #pos{font-size:18px;color:#00ffff;margin-bottom:8px;}
+  #phrase{font-size:16px;color:#ccff33;margin-bottom:10px;line-height:1.5;}
+  #spell{font-size:18px;color:#66ccff;letter-spacing:2px;margin-bottom:6px;}
+
+  #followInput{
+    font-size:18px;padding:8px 15px;width:320px;text-align:center;
+    background:#1a2235;color:#ff699;
+    border:2px solid #ff699;border-radius:10px;outline:none;
+    letter-spacing:2px;transition:border-color 0.3s ease;
+  }
+  #followInput.error{border-color:#ff4444;color:#ff4444;}
+  #followInput.correct{border-color:#00ff99;color:#00ff99;}
+
+  #letterTip{font-size:16px;letter-spacing:2px;margin-top:8px;min-height:20px;}
+  #letterTip span{padding:0 2px;}
+  #letterTip .correct-letter{color:#00ff99;}
+  #letterTip .wrong-letter{color:#ff4444;text-decoration:underline;}
+  #letterTip .empty-letter{color:#666;}
+
+  #errorTip{font-size:14px;color:#ff4444;margin-top:6px;height:18px;line-height:18px;}
+  #tip{margin-top:15px;font-size:14px;color:#aaa;}
+
+  #controlBtns{
+    position:fixed;top:20px;left:20px;z-index:20;
+    display:flex;gap:10px;
+  }
+  .ctrlBtn{
+    width:45px;height:45px;border-radius:50%;
+    background:rgba(15,20,40,0.9);color:#fff;
+    border:none;cursor:pointer;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ctrlBtn:hover{background:rgba(30,40,80,0.9);}
+
+  #categoryBtns{
+    position:fixed;top:20px;right:20px;z-index:20;
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;
+    max-width:50%;
+  }
+  .categoryBtn{
+    padding:6px 12px;border-radius:20px;
+    background:rgba(15,20,40,0.9);color:#fff;border:none;
+    cursor:pointer;font-size:14px;white-space:nowrap;
+    transition:all 0.2s ease;
+  }
+  .categoryBtn:hover{
+    background:rgba(0,255,200,0.8);color:#080a1a;
+    transform:scale(1.05);
+  }
+  .categoryBtn.active{
+    background:#00ffcc;color:#080a1a;font-weight:bold;
+  }
+
+  canvas{display:block;}
+</style>
+</head>
+<body>
+
+<div id="controlBtns">
+  <button class="ctrlBtn" id="prevBtn">⬅️</button>
+  <button class="ctrlBtn" id="playPauseBtn">⏯️</button>
+  <button class="ctrlBtn" id="nextBtn">➡️</button>
+</div>
+
+<div id="categoryBtns">
+  <button class="categoryBtn" data-cate="个人情况">个人情况</button>
+  <button class="categoryBtn" data-cate="情感性格">情感性格</button>
+  <button class="categoryBtn" data-cate="学校学习">学校学习</button>
+  <button class="categoryBtn" data-cate="日常生活">日常生活</button>
+  <button class="categoryBtn" data-cate="饮食健康">饮食健康</button>
+  <button class="categoryBtn" data-cate="自然环境">自然环境</button>
+  <button class="categoryBtn" data-cate="地点交通">地点交通</button>
+  <button class="categoryBtn" data-cate="兴趣爱好">兴趣爱好</button>
+  <button class="categoryBtn" data-cate="高频形容词">高频形容词</button>
+  <button class="categoryBtn" data-cate="核心动词·come">come类</button>
+  <button class="categoryBtn" data-cate="核心动词·get">get类</button>
+  <button class="categoryBtn" data-cate="核心动词·give">give类</button>
+  <button class="categoryBtn" data-cate="核心动词·go">go类</button>
+  <button class="categoryBtn" data-cate="核心动词·keep">keep类</button>
+  <button class="categoryBtn" data-cate="核心动词·look">look类</button>
+  <button class="categoryBtn" data-cate="核心动词·make">make类</button>
+  <button class="categoryBtn" data-cate="核心动词·take">take类</button>
+  <button class="categoryBtn" data-cate="核心动词·put">put类</button>
+  <button class="categoryBtn" data-cate="核心动词·turn">turn类</button>
+  <button class="categoryBtn" data-cate="核心动词·break">break类</button>
+  <button class="categoryBtn" data-cate="核心动词·bring">bring类</button>
+  <button class="categoryBtn" data-cate="all">全部</button>
+</div>
+
+<div id="wordBox">
+  <div id="unit"></div>
+  <div id="english"></div>
+  <div id="phonetic">音标：</div>
+  <div id="chinese"></div>
+  <div id="pos">词性：</div>
+  <div id="phrase">高频词组：</div>
+  <div id="spell">拼写：</div>
+  <input id="followInput" placeholder="跟着拼写，自动判断对错" autocomplete="off">
+  <div id="letterTip"></div>
+  <div id="errorTip"></div>
+  <div id="tip">⬅️➡️切换 | ⏯️暂停 | 回车下一个 | 右上角点类别直接跳</div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+let words = [
+  { unit:"个人情况", en:"name", phonetic:"/neɪm/", pos:"n. 名字", zh:"名字", phrase:"first name 名字；last name 姓氏" },
+  { unit:"个人情况", en:"age", phonetic:"/eɪdʒ/", pos:"n. 年龄", zh:"年龄", phrase:"at the age of 在…岁时" },
+  { unit:"个人情况", en:"family", phonetic:"/ˈfæməli/", pos:"n. 家庭", zh:"家庭；家人", phrase:"family photo 全家福" },
+  { unit:"个人情况", en:"parent", phonetic:"/ˈpeərənt/", pos:"n. 父(母)亲", zh:"父母", phrase:"parents' room 父母的房间" },
+  { unit:"个人情况", en:"friend", phonetic:"/frend/", pos:"n. 朋友", zh:"朋友", phrase:"make friends 交朋友" },
+  { unit:"个人情况", en:"student", phonetic:"/ˈstjuːdnt/", pos:"n. 学生", zh:"学生", phrase:"primary school student 小学生" },
+  { unit:"个人情况", en:"teacher", phonetic:"/ˈtiːtʃə(r)/", pos:"n. 老师", zh:"教师", phrase:"English teacher 英语老师" },
+  { unit:"个人情况", en:"classmate", phonetic:"/ˈklɑːsmeɪt/", pos:"n. 同班同学", zh:"同班同学", phrase:"new classmate 新同学" },
+
+  { unit:"情感性格", en:"happy", phonetic:"/ˈhæpi/", pos:"adj. 开心的", zh:"开心的", phrase:"be happy to do 很高兴做某事" },
+  { unit:"情感性格", en:"sad", phonetic:"/sæd/", pos:"adj. 难过的", zh:"难过的", phrase:"feel sad 感到难过" },
+  { unit:"情感性格", en:"friendly", phonetic:"/ˈfrendli/", pos:"adj. 友好的", zh:"友好的", phrase:"be friendly to 对…友好" },
+  { unit:"情感性格", en:"kind", phonetic:"/kaɪnd/", pos:"adj. 善良的", zh:"善良的", phrase:"be kind to 对…友善" },
+  { unit:"情感性格", en:"shy", phonetic:"/ʃaɪ/", pos:"adj. 害羞的", zh:"害羞的", phrase:"a shy girl 害羞的女孩" },
+  { unit:"情感性格", en:"busy", phonetic:"/ˈbɪzi/", pos:"adj. 忙碌的", zh:"忙碌的", phrase:"be busy with 忙于…" },
+  { unit:"情感性格", en:"free", phonetic:"/friː/", pos:"adj. 空闲的", zh:"空闲的", phrase:"free time 空闲时间" },
+
+  { unit:"学校学习", en:"school", phonetic:"/skuːl/", pos:"n. 学校", zh:"学校", phrase:"after school 放学后" },
+  { unit:"学校学习", en:"class", phonetic:"/klɑːs/", pos:"n. 班级；课", zh:"班级；课", phrase:"in class 在课堂上" },
+  { unit:"学校学习", en:"lesson", phonetic:"/ˈlesn/", pos:"n. 课；教训", zh:"课；功课", phrase:"have lessons 上课" },
+  { unit:"学校学习", en:"subject", phonetic:"/ˈsʌbdʒɪkt/", pos:"n. 科目", zh:"科目", phrase:"favorite subject 最喜欢的科目" },
+  { unit:"学校学习", en:"English", phonetic:"/ˈɪŋɡlɪʃ/", pos:"n. 英语", zh:"英语", phrase:"speak English 说英语" },
+  { unit:"学校学习", en:"Chinese", phonetic:"/ˌtʃaɪˈniːz/", pos:"n. 语文；汉语", zh:"语文；汉语", phrase:"in Chinese 用汉语" },
+  { unit:"学校学习", en:"math", phonetic:"/mæθ/", pos:"n. 数学", zh:"数学", phrase:"math problem 数学题" },
+  { unit:"学校学习", en:"learn", phonetic:"/lɜːn/", pos:"v. 学习", zh:"学习", phrase:"learn from 向…学习" },
+  { unit:"学校学习", en:"study", phonetic:"/ˈstʌdi/", pos:"v./n. 学习", zh:"学习；研究", phrase:"study hard 努力学习" },
+  { unit:"学校学习", en:"read", phonetic:"/riːd/", pos:"v. 读", zh:"读；阅读", phrase:"read books 看书" },
+  { unit:"学校学习", en:"write", phonetic:"/raɪt/", pos:"v. 写", zh:"写", phrase:"write down 写下" },
+  { unit:"学校学习", en:"listen", phonetic:"/ˈlɪsn/", pos:"v. 听", zh:"听", phrase:"listen to 听…" },
+  { unit:"学校学习", en:"speak", phonetic:"/spiːk/", pos:"v. 说", zh:"说；讲", phrase:"speak to 跟…说话" },
+  { unit:"学校学习", en:"homework", phonetic:"/ˈhəʊmwɜːk/", pos:"n. 作业", zh:"家庭作业", phrase:"do homework 做作业" },
+  { unit:"学校学习", en:"exam", phonetic:"/ɪɡˈzæm/", pos:"n. 考试", zh:"考试", phrase:"take an exam 参加考试" },
+
+  { unit:"日常生活", en:"morning", phonetic:"/ˈmɔːnɪŋ/", pos:"n. 早上", zh:"早晨", phrase:"in the morning 在早上" },
+  { unit:"日常生活", en:"afternoon", phonetic:"/ˌɑːftəˈnuːn/", pos:"n. 下午", zh:"下午", phrase:"in the afternoon 在下午" },
+  { unit:"日常生活", en:"evening", phonetic:"/ˈiːvnɪŋ/", pos:"n. 晚上", zh:"晚上", phrase:"in the evening 在晚上" },
+  { unit:"日常生活", en:"day", phonetic:"/deɪ/", pos:"n. 天；白天", zh:"天；白天", phrase:"all day 整天" },
+  { unit:"日常生活", en:"week", phonetic:"/wiːk/", pos:"n. 星期", zh:"星期", phrase:"every week 每周" },
+  { unit:"日常生活", en:"month", phonetic:"/mʌnθ/", pos:"n. 月", zh:"月", phrase:"this month 这个月" },
+  { unit:"日常生活", en:"year", phonetic:"/jɪə(r)/", pos:"n. 年", zh:"年", phrase:"last year 去年" },
+  { unit:"日常生活", en:"today", phonetic:"/təˈdeɪ/", pos:"adv./n. 今天", zh:"今天", phrase:"today's news 今天的新闻" },
+  { unit:"日常生活", en:"tomorrow", phonetic:"/təˈmɒrəʊ/", pos:"n./adv. 明天", zh:"明天", phrase:"tomorrow morning 明天早上" },
+  { unit:"日常生活", en:"sleep", phonetic:"/sliːp/", pos:"v./n. 睡觉", zh:"睡觉", phrase:"go to sleep 入睡" },
+  { unit:"日常生活", en:"rest", phonetic:"/rest/", pos:"v./n. 休息", zh:"休息", phrase:"have a rest 休息一下" },
+  { unit:"日常生活", en:"work", phonetic:"/wɜːk/", pos:"v./n. 工作", zh:"工作", phrase:"go to work 去上班" },
+  { unit:"日常生活", en:"play", phonetic:"/pleɪ/", pos:"v. 玩", zh:"玩；打", phrase:"play basketball 打篮球" },
+  { unit:"日常生活", en:"watch", phonetic:"/wɒtʃ/", pos:"v. 观看", zh:"观看", phrase:"watch TV 看电视" },
+
+  { unit:"饮食健康", en:"food", phonetic:"/fuːd/", pos:"n. 食物", zh:"食物", phrase:"fast food 快餐" },
+  { unit:"饮食健康", en:"rice", phonetic:"/raɪs/", pos:"n. 米饭", zh:"米饭", phrase:"eat rice 吃米饭" },
+  { unit:"饮食健康", en:"bread", phonetic:"/bred/", pos:"n. 面包", zh:"面包", phrase:"a piece of bread 一片面包" },
+  { unit:"饮食健康", en:"meat", phonetic:"/miːt/", pos:"n. 肉", zh:"肉", phrase:"eat meat 吃肉" },
+  { unit:"饮食健康", en:"fish", phonetic:"/fɪʃ/", pos:"n. 鱼；鱼肉", zh:"鱼；鱼肉", phrase:"eat fish 吃鱼" },
+  { unit:"饮食健康", en:"egg", phonetic:"/eɡ/", pos:"n. 鸡蛋", zh:"鸡蛋", phrase:"an egg 一个鸡蛋" },
+  { unit:"饮食健康", en:"milk", phonetic:"/mɪlk/", pos:"n. 牛奶", zh:"牛奶", phrase:"drink milk 喝牛奶" },
+  { unit:"饮食健康", en:"fruit", phonetic:"/fruːt/", pos:"n. 水果", zh:"水果", phrase:"fresh fruit 新鲜水果" },
+  { unit:"饮食健康", en:"apple", phonetic:"/ˈæpl/", pos:"n. 苹果", zh:"苹果", phrase:"an apple a day 一天一个苹果" },
+  { unit:"饮食健康", en:"water", phonetic:"/ˈwɔːtə(r)/", pos:"n. 水", zh:"水", phrase:"drink water 喝水" },
+  { unit:"饮食健康", en:"eat", phonetic:"/iːt/", pos:"v. 吃", zh:"吃", phrase:"eat well 吃得好" },
+  { unit:"饮食健康", en:"drink", phonetic:"/drɪŋk/", pos:"v. 喝", zh:"喝", phrase:"drink tea 喝茶" },
+  { unit:"饮食健康", en:"healthy", phonetic:"/ˈhelθi/", pos:"adj. 健康的", zh:"健康的", phrase:"keep healthy 保持健康" },
+  { unit:"饮食健康", en:"exercise", phonetic:"/ˈeksəsaɪz/", pos:"v./n. 锻炼", zh:"锻炼", phrase:"do exercise 做运动" },
+
+  { unit:"自然环境", en:"sky", phonetic:"/skaɪ/", pos:"n. 天空", zh:"天空", phrase:"blue sky 蓝天" },
+  { unit:"自然环境", en:"sun", phonetic:"/sʌn/", pos:"n. 太阳", zh:"太阳", phrase:"in the sun 在阳光下" },
+  { unit:"自然环境", en:"moon", phonetic:"/muːn/", pos:"n. 月亮", zh:"月亮", phrase:"full moon 满月" },
+  { unit:"自然环境", en:"star", phonetic:"/stɑː(r)/", pos:"n. 星星", zh:"星星", phrase:"count stars 数星星" },
+  { unit:"自然环境", en:"cloud", phonetic:"/klaʊd/", pos:"n. 云", zh:"云", phrase:"white cloud 白云" },
+  { unit:"自然环境", en:"rain", phonetic:"/reɪn/", pos:"n./v. 雨；下雨", zh:"雨；下雨", phrase:"rain heavily 下大雨" },
+  { unit:"自然环境", en:"tree", phonetic:"/triː/", pos:"n. 树", zh:"树", phrase:"plant trees 植树" },
+  { unit:"自然环境", en:"flower", phonetic:"/ˈflaʊə(r)/", pos:"n. 花", zh:"花", phrase:"beautiful flowers 漂亮的花" },
+  { unit:"自然环境", en:"river", phonetic:"/ˈrɪvə(r)/", pos:"n. 河", zh:"河", phrase:"in the river 在河里" },
+  { unit:"自然环境", en:"lake", phonetic:"/leɪk/", pos:"n. 湖", zh:"湖", phrase:"near the lake 在湖边" },
+  { unit:"自然环境", en:"sea", phonetic:"/siː/", pos:"n. 海", zh:"海", phrase:"by the sea 在海边" },
+  { unit:"自然环境", en:"mountain", phonetic:"/ˈmaʊntən/", pos:"n. 山", zh:"山", phrase:"climb mountains 爬山" },
+  { unit:"自然环境", en:"environment", phonetic:"/ɪnˈvaɪrənmənt/", pos:"n. 环境", zh:"环境", phrase:"protect the environment 保护环境" },
+  { unit:"自然环境", en:"clean", phonetic:"/kliːn/", pos:"adj. 干净的 v. 打扫", zh:"干净的；打扫", phrase:"clean up 打扫干净" },
+
+  { unit:"地点交通", en:"home", phonetic:"/həʊm/", pos:"n./adv. 家", zh:"家", phrase:"go home 回家" },
+  { unit:"地点交通", en:"house", phonetic:"/haʊs/", pos:"n. 房子", zh:"房子", phrase:"a big house 大房子" },
+  { unit:"地点交通", en:"city", phonetic:"/ˈsɪti/", pos:"n. 城市", zh:"城市", phrase:"in the city 在城市里" },
+  { unit:"地点交通", en:"hospital", phonetic:"/ˈhɒspɪtl/", pos:"n. 医院", zh:"医院", phrase:"in hospital 生病住院" },
+  { unit:"地点交通", en:"bank", phonetic:"/bæŋk/", pos:"n. 银行", zh:"银行", phrase:"go to the bank 去银行" },
+  { unit:"地点交通", en:"shop", phonetic:"/ʃɒp/", pos:"n. 商店", zh:"商店", phrase:"go shopping 去购物" },
+  { unit:"地点交通", en:"supermarket", phonetic:"/ˈsuːpəmɑːkɪt/", pos:"n. 超市", zh:"超市", phrase:"in the supermarket 在超市里" },
+  { unit:"地点交通", en:"restaurant", phonetic:"/ˈrestrɒnt/", pos:"n. 餐馆", zh:"餐馆", phrase:"eat in a restaurant 在餐馆吃饭" },
+  { unit:"地点交通", en:"park", phonetic:"/pɑːk/", pos:"n. 公园", zh:"公园", phrase:"in the park 在公园里" },
+  { unit:"地点交通", en:"zoo", phonetic:"/zuː/", pos:"n. 动物园", zh:"动物园", phrase:"go to the zoo 去动物园" },
+  { unit:"地点交通", en:"library", phonetic:"/ˈlaɪbrəri/", pos:"n. 图书馆", zh:"图书馆", phrase:"in the library 在图书馆" },
+  { unit:"地点交通", en:"bus", phonetic:"/bʌs/", pos:"n. 公共汽车", zh:"公共汽车", phrase:"by bus 乘公交车" },
+  { unit:"地点交通", en:"train", phonetic:"/treɪn/", pos:"n. 火车", zh:"火车", phrase:"by train 乘火车" },
+  { unit:"地点交通", en:"plane", phonetic:"/pleɪn/", pos:"n. 飞机", zh:"飞机", phrase:"by plane 乘飞机" },
+  { unit:"地点交通", en:"bike", phonetic:"/baɪk/", pos:"n. 自行车", zh:"自行车", phrase:"by bike 骑自行车" },
+  { unit:"地点交通", en:"car", phonetic:"/kɑː(r)/", pos:"n. 小汽车", zh:"小汽车", phrase:"by car 乘小汽车" },
+  { unit:"地点交通", en:"walk", phonetic:"/wɔːk/", pos:"v./n. 走；步行", zh:"走；步行", phrase:"on foot 步行" },
+
+  { unit:"兴趣爱好", en:"hobby", phonetic:"/ˈhɒbi/", pos:"n. 爱好", zh:"爱好", phrase:"one's hobby 某人的爱好" },
+  { unit:"兴趣爱好", en:"music", phonetic:"/ˈmjuːzɪk/", pos:"n. 音乐", zh:"音乐", phrase:"listen to music 听音乐" },
+  { unit:"兴趣爱好", en:"song", phonetic:"/sɒŋ/", pos:"n. 歌曲", zh:"歌曲", phrase:"sing a song 唱歌" },
+  { unit:"兴趣爱好", en:"movie", phonetic:"/ˈmuːvi/", pos:"n. 电影", zh:"电影", phrase:"see a movie 看电影" },
+  { unit:"兴趣爱好", en:"sport", phonetic:"/spɔːt/", pos:"n. 运动", zh:"运动", phrase:"do sports 做运动" },
+  { unit:"兴趣爱好", en:"football", phonetic:"/ˈfʊtbɔːl/", pos:"n. 足球", zh:"足球", phrase:"play football 踢足球" },
+  { unit:"兴趣爱好", en:"basketball", phonetic:"/ˈbɑːskɪtbɔːl/", pos:"n. 篮球", zh:"篮球", phrase:"play basketball 打篮球" },
+  { unit:"兴趣爱好", en:"swim", phonetic:"/swɪm/", pos:"v. 游泳", zh:"游泳", phrase:"go swimming 去游泳" },
+  { unit:"兴趣爱好", en:"like", phonetic:"/laɪk/", pos:"v. 喜欢", zh:"喜欢", phrase:"like doing 喜欢做某事" },
+  { unit:"兴趣爱好", en:"love", phonetic:"/lʌv/", pos:"v. 爱；喜爱", zh:"爱；喜爱", phrase:"love to do 喜爱做某事" },
+  { unit:"兴趣爱好", en:"enjoy", phonetic:"/ɪnˈdʒɔɪ/", pos:"v. 享受", zh:"享受；喜欢", phrase:"enjoy oneself 玩得开心" },
+
+    // ========== 核心动词短语 ==========
+  { unit:"核心动词·come", en:"come", phonetic:"/kʌm/", pos:"v. 来", zh:"来", phrase:"come true 实现 | My dream will come true.\ncome out 出版/开花 | The flowers come out in spring.\ncome up with 想出 | He can come up with good ideas.\ncome from 来自 | I come from China.\ncome across 偶然遇见 | I came across an old friend yesterday." },
+  { unit:"核心动词·get", en:"get", phonetic:"/ɡet/", pos:"v. 得到；变得", zh:"得到；变得", phrase:"get up 起床 | I get up at six every morning.\nget over 克服 | We should get over difficulties.\nget to 到达 | We get to school at 7:30.\nget along with 相处 | He gets along well with classmates.\nget lost 迷路 | Don’t get lost in the forest.\nget rid of 摆脱 | He can’t get rid of the bad habit.\nget used to 习惯于 | I get used to getting up early." },
+  { unit:"核心动词·give", en:"give", phonetic:"/ɡɪv/", pos:"v. 给", zh:"给", phrase:"give up 放弃 | Don’t give up your dream.\ngive away 捐赠 | He gave away his old books.\ngive back 归还 | Please give back my pen.\ngive in 屈服 | Don’t give in to difficulties.\ngive out 分发 | The teacher gave out the papers." },
+  { unit:"核心动词·go", en:"go", phonetic:"/ɡəʊ/", pos:"v. 去", zh:"去", phrase:"go on 继续 | Go on working, please.\ngo away 离开 | Go away! I’m angry.\ngo back 返回 | Let’s go back home.\ngo down 下降 | The temperature goes down.\ngo over 复习 | I go over my lessons every night.\ngo through 浏览/经历 | Go through your notes before exams." },
+  { unit:"核心动词·keep", en:"keep", phonetic:"/kiːp/", pos:"v. 保持；保留", zh:"保持；保留", phrase:"keep on 继续 | Keep on trying and you will succeed.\nkeep away from 远离 | Keep away from bad people.\nkeep in mind 记住 | Please keep this in mind.\nkeep up with 跟上 | Study hard to keep up with others.\nkeep healthy 保持健康 | We must keep healthy." },
+  { unit:"核心动词·look", en:"look", phonetic:"/lʊk/", pos:"v. 看", zh:"看", phrase:"look for 寻找 | I’m looking for my keys.\nlook up 查阅 | Look up the word in the dictionary.\nlook out(for) 小心 | Look out! The car is coming.\nlook after 照顾 | Please look after my dog.\nlook forward to 盼望 | I look forward to your reply.\nlook through 浏览 | Look through the book quickly.\nlook up to 尊敬 | We look up to our teachers." },
+  { unit:"核心动词·make", en:"make", phonetic:"/meɪk/", pos:"v. 制作；使", zh:"制作；使", phrase:"make up 编造/组成 | Don’t make up stories.\nmake progress 进步 | He makes great progress.\nmake sure 确保 | Make sure you finish homework.\nmake a decision 下决心 | He made a decision to study hard.\nmake friends 交朋友 | It’s easy to make friends here.\nmake a living 谋生 | He makes a living by selling books." },
+  { unit:"核心动词·take", en:"take", phonetic:"/teɪk/", pos:"v. 拿；乘坐；花费", zh:"拿；乘坐；花费", phrase:"take up 占据/开始 | The bed takes up much room.\ntake after 像 | He takes after his father.\ntake place 发生 | The sports meeting will take place.\ntake off 脱下/起飞 | Take off your coat.\ntake care of 照顾 | Please take care of the old.\ntake part in 参加 | I will take part in the contest.\ntake pride in 骄傲 | We take pride in our country.\ntake advantage of 利用 | We should take advantage of time.\ntake in 吸收 | Plants take in CO2.\ntake over 接管 | He will take over the company." },
+  { unit:"核心动词·put", en:"put", phonetic:"/pʊt/", pos:"v. 放", zh:"放", phrase:"put up 张贴 | Put up a poster on the wall.\nput on 穿上 | Put on your coat. It’s cold.\nput away 收拾 | Put away your toys.\nput off 推迟 | The meeting is put off.\nput out 扑灭 | Firemen put out the fire.\nput down 写下/放下 | Put down your name here." },
+  { unit:"核心动词·turn", en:"turn", phonetic:"/tɜːn/", pos:"v. 转动；变得", zh:"转动；变得", phrase:"turn down 调小/拒绝 | Turn down the radio.\nturn on 打开 | Turn on the light.\nturn off 关闭 | Turn off the TV before leaving.\nturn up 调大 | Turn up the music.\nturn into 变成 | Water turns into ice.\nturn to 求助于 | You can turn to me for help." },
+  { unit:"核心动词·break", en:"break", phonetic:"/breɪk/", pos:"v. 打破；弄坏", zh:"打破；弄坏", phrase:"break down 出故障/分解 | My car broke down on the way.\nbreak out 爆发 | A fire broke out last night.\nbreak up 解散/分手 | The band broke up.\nbreak into 闯入 | Thieves broke into the house." },
+  { unit:"核心动词·bring", en:"bring", phonetic:"/brɪŋ/", pos:"v. 带来", zh:"带来", phrase:"bring about 引起 | The Internet brings about great changes.\nbring back 带回 | Please bring back my book tomorrow.\nbring in 引进 | They bring in new technology.\nbring up 抚养/提出 | My parents brought me up." },
+
+  { unit:"高频形容词", en:"good", phonetic:"/ɡʊd/", pos:"adj. 好的", zh:"好的", phrase:"be good at 擅长" },
+  { unit:"高频形容词", en:"nice", phonetic:"/naɪs/", pos:"adj. 美好的", zh:"美好的", phrase:"nice day 美好的一天" },
+  { unit:"高频形容词", en:"great", phonetic:"/ɡreɪt/", pos:"adj. 极好的", zh:"极好的", phrase:"great fun 极大的乐趣" },
+  { unit:"高频形容词", en:"new", phonetic:"/njuː/", pos:"adj. 新的", zh:"新的", phrase:"new friend 新朋友" },
+  { unit:"高频形容词", en:"old", phonetic:"/əʊld/", pos:"adj. 老的；旧的", zh:"老的；旧的", phrase:"old man 老人" },
+  { unit:"高频形容词", en:"young", phonetic:"/jʌŋ/", pos:"adj. 年轻的", zh:"年轻的", phrase:"young people 年轻人" },
+  { unit:"高频形容词", en:"hot", phonetic:"/hɒt/", pos:"adj. 热的", zh:"热的", phrase:"hot day 热天" },
+  { unit:"高频形容词", en:"cold", phonetic:"/kəʊld/", pos:"adj. 冷的", zh:"冷的", phrase:"cold water 冷水" },
+  { unit:"高频形容词", en:"warm", phonetic:"/wɔːm/", pos:"adj. 温暖的", zh:"温暖的", phrase:"warm sunshine 温暖的阳光" },
+  { unit:"高频形容词", en:"cool", phonetic:"/kuːl/", pos:"adj. 凉爽的；酷的", zh:"凉爽的；酷的", phrase:"cool clothes 酷的衣服" }
+];
+
+const cateStartIndex = {};
+words.forEach((item, i) => {
+  if(!cateStartIndex[item.unit]) cateStartIndex[item.unit] = i;
+});
+cateStartIndex.all = 0;
+
+let switchTime = 16;
+let timer = null;
+let spellTimer = null;
+let index = 0;
+let isPlaying = true;
+let currentCate = "all";
+
+const followInput = document.getElementById('followInput');
+const errorTip = document.getElementById('errorTip');
+const letterTip = document.getElementById('letterTip');
+let currentWord = "";
+
+function speakText(text, isLetter=false) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = isLetter ? 0.8 : 1;
+  window.speechSynthesis.speak(u);
+}
+
+function checkSpelling() {
+  const inputValue = followInput.value.trim().toLowerCase();
+  const targetWord = currentWord.toLowerCase();
+  followInput.classList.remove('error', 'correct');
+  errorTip.textContent = "";
+  letterTip.innerHTML = "";
+  if (!inputValue) return;
+
+  if (inputValue === targetWord) {
+    followInput.classList.add('correct');
+    errorTip.textContent = "✅ 拼写正确！";
+    errorTip.style.color = "#00ff99";
+    renderLetterTip(targetWord, targetWord, true);
+  } else {
+    followInput.classList.add('error');
+    errorTip.textContent = inputValue.length !== targetWord.length
+      ? `❌ 长度应为 ${targetWord.length} 个字母`
+      : "❌ 字母有误";
+    errorTip.style.color = "#ff4444";
+    renderLetterTip(targetWord, inputValue, false);
+  }
+}
+
+function renderLetterTip(target, input, isAllCorrect) {
+  let html = "";
+  const maxLen = Math.max(target.length, input.length);
+  for(let i=0;i<maxLen;i++){
+    const t = target[i]||"";
+    const inp = input[i]||"";
+    if(isAllCorrect){
+      html+=`<span class="correct-letter">${t.toUpperCase()}</span>`;
+    }else{
+      if(i>=target.length) html+=`<span class="wrong-letter">${inp.toUpperCase()}</span>`;
+      else if(i>=input.length) html+=`<span class="empty-letter">_</span>`;
+      else if(t===inp) html+=`<span class="correct-letter">${t.toUpperCase()}</span>`;
+      else html+=`<span class="wrong-letter">${t.toUpperCase()}</span>`;
+    }
+  }
+  letterTip.innerHTML = html;
+}
+
+function showSpell(word) {
+  if(spellTimer) clearInterval(spellTimer);
+  const spellDom = document.getElementById('spell');
+  spellDom.innerText = "拼写：";
+  let i=0;
+  spellTimer = setInterval(()=>{
+    if(i<word.length){
+      spellDom.innerText += word[i];
+      speakText(word[i],true);
+      i++;
+    }else{
+      clearInterval(spellTimer);
+      setTimeout(()=>speakText(word),500);
+    }
+  },800);
+}
+
+function showWord(){
+  if(spellTimer) clearInterval(spellTimer);
+  const w=words[index%words.length];
+  document.getElementById("unit").innerText = w.unit;
+  document.getElementById("english").innerText = w.en;
+  document.getElementById("phonetic").innerText = "音标：" + w.phonetic;
+  document.getElementById("chinese").innerText = w.zh;
+  document.getElementById("pos").innerText = "词性：" + w.pos;
+  document.getElementById("phrase").innerText = "高频词组：" + w.phrase;
+  document.getElementById("spell").innerText = "拼写：";
+
+  currentWord = w.en;
+  followInput.value = "";
+  followInput.classList.remove('error','correct');
+  errorTip.textContent = "";
+  letterTip.innerHTML = "";
+  followInput.focus();
+
+  speakText(w.en);
+  setTimeout(()=>showSpell(w.en),1000);
+}
+
+function startWordSwitch(){
+  if(timer) clearInterval(timer);
+  if(isPlaying){
+    timer = setInterval(()=>{
+      index = (index + 1) % words.length;
+      showWord();
+    }, switchTime*1000);
+  }
+}
+
+// 修复：上一个 / 下一个 正常使用
+function prevWord(){
+  index = (index - 1 + words.length) % words.length;
+  showWord();
+}
+function nextWord(){
+  index = (index + 1) % words.length;
+  showWord();
+}
+
+function togglePlayPause(){
+  isPlaying=!isPlaying;
+  document.getElementById('playPauseBtn').innerText = isPlaying ? "⏯️" : "▶️";
+  startWordSwitch();
+}
+
+function jumpToCategory(cate){
+  currentCate = cate;
+  index = cateStartIndex[cate];
+
+  document.querySelectorAll('.categoryBtn').forEach(btn=>{
+    btn.classList.remove('active');
+    if(btn.dataset.cate === cate) btn.classList.add('active');
+  });
+
+  if(cate !== "all"){
+    isPlaying = false;
+    document.getElementById('playPauseBtn').innerText = "▶️";
+    if(timer) clearInterval(timer);
+  }else{
+    isPlaying = true;
+    document.getElementById('playPauseBtn').innerText = "⏯️";
+    startWordSwitch();
+  }
+  showWord();
+}
+
+// 星空背景
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+function resize(){c.width=innerWidth;c.height=innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+
+let stars=[];
+for(let i=0;i<800;i++){
+  stars.push({x:(Math.random()-0.5)*innerWidth*3,y:(Math.random()-0.5)*innerHeight*3,z:Math.random()*1500+100,size:Math.random()*1.5+0.5});
+}
+let tx=0,ty=0;
+window.addEventListener('mousemove',e=>{tx=(e.x-innerWidth/2)/25;ty=(e.y-innerHeight/2)/25;});
+
+function draw(){
+  ctx.fillStyle='#080a1a';
+  ctx.fillRect(0,0,c.width,c.height);
+  stars.forEach(s=>{
+    s.z-=2.5;if(s.z<50)s.z=1500;
+    const k=200/s.z;
+    const x=c.width/2+(s.x+tx)*k;
+    const y=c.height/2+(s.y+ty)*k;
+    if(x<0||x>c.width||y<0||y>c.height)return;
+    ctx.fillStyle=`rgba(255,255,255,${Math.min(1,(1500-s.z)/1000)})`;
+    ctx.beginPath();ctx.arc(x,y,s.size*k,0,Math.PI*2);ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+
+document.getElementById('prevBtn').onclick = prevWord;
+document.getElementById('nextBtn').onclick = nextWord;
+document.getElementById('playPauseBtn').onclick = togglePlayPause;
+
+document.querySelectorAll('.categoryBtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    jumpToCategory(btn.dataset.cate);
+  });
+});
+
+followInput.addEventListener('input', checkSpelling);
+followInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    checkSpelling();
+    setTimeout(nextWord,800);
+  }
+});
+
+showWord();
+startWordSwitch();
+draw();
+document.querySelector('.categoryBtn[data-cate="all"]').classList.add('active');
+</script>
+</body>
+</html>
